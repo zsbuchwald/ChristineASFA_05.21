@@ -1,0 +1,14 @@
+---
+title: "Christine_ASFA_05.21_Analysis"
+output: html_document
+---
+
+
+```{r load libraries}
+plot(pressure)
+```
+
+
+```{r load data}
+plot(pressure)
+```
