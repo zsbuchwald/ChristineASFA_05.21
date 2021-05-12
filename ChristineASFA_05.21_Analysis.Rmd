@@ -5,10 +5,303 @@ output: html_document
 
 
 ```{r load libraries}
-plot(pressure)
+library(tidyverse)
+library(ggplot2)
 ```
 
 
 ```{r load data}
-plot(pressure)
+
+
+Breeds <- read.csv("ASFA_BreedNames.csv")
+
+CTE <- read.csv("ASFA_ClubsTrialsEntriesHistoric.csv", check.names=FALSE)
+
+Competing <- read.csv("ASFA_HoundsCompeting.csv")
+
+New <- read.csv("ASFA_NewHounds2020.csv")
+
+Titles <- read.csv("ASFA_TitleStats2020.csv")
+
+Entries <- read.csv("ASFA_TotalEntriesHistoric.csv", check.names=FALSE) %>% select(-Diff)
+
+Vets <- read.csv("ASFA_Veteran2020.csv")
+
+
+
 ```
+
+
+Let's start with looking at entries over the years
+```{r Entries}
+
+glimpse(Entries)
+
+EntriesL <- Entries %>% pivot_longer(c("2000":"2020"), names_to = "Year", values_to = "Entries") %>% filter(Breed != "Total entries" | Breed != "Non count")
+
+
+f <- ggplot(EntriesL, aes(y=Entries, x=Year, fill=Breed))
+f <- f + theme_bw(28)
+f <- f + geom_point(data=EntriesL, mapping=aes(x=Year, y=Entries), size=4, shape=21,position = position_dodge(.9))
+f <- f + xlab("Years") + ylab("Number of Entries")
+f <- f + ggtitle(expression(atop("Number of Entries", atop(italic("ASFA"), ""))))
+f <- f + theme(plot.title = element_text(size = 35, face="bold", hjust=0.5))
+f <- f + theme(legend.title= element_text(size=28))
+f <- f + theme(legend.text= element_text(size=20))
+#f <- f + geom_vline(xintercept=c(1.5,2.5,3.5,4.5,5.5), colour='grey')
+#f <- f + guides(fill = guide_legend(override.aes = list(alpha = 1)))
+#f <- f + geom_text(aes(label= ID), show.legend = F)
+#f <- f + facet_grid(~Age)
+f
+
+#ggsave("/home/zbuchwald/Documents/CCP/Analysis_New/7.11.18_Summer2018_TideFinalUSE/Figures/TideInVivo_Volumes_BrainVol_WithIDs.png",f, width=12, height=8)
+
+
+```
+
+Too many.. how can we break this down to see it better? Maybe we should look by region instead? Let's try it:
+
+```{r Entries}
+
+glimpse(CTE)
+
+CTEE <- CTE %>% filter(Type=="Entries")
+
+CTEL <- CTE %>%  pivot_longer(c("2000":"2020"), names_to = "Year", values_to = "Entries") 
+
+
+```
+
+Ok, I didn't like that. Let's look at breeds by region instead. Can we collapse this data so we can make graphs and facet_grid by region? 
+
+Took out entries by breed for each region data from the original word doc and saved them by regions, upload those: 
+
+```{r By regions}
+
+R1 <- read.csv("Region 1 - AK,WA,OR,ID,MT.csv") %>% select(-Total, -II)
+R2 <- read.csv("Region 2 - CA,NV.csv")%>% select(-Total, -II)
+R3 <- read.csv("Region 3 - CO,WY,UT,NM.csv")%>% select(-Total, -II)
+R4 <- read.csv("Region 4 - TX,OK,AR,LA.csv")%>% select(-Total, -II)
+R5 <- read.csv("Region 5 - ND,SD,IA,NE,MN,KS,MO.csv")%>% select(-Total, -II)
+R6 <- read.csv("Region 6 - WI,IL,MI,IN,OH,KY.csv")%>% select(-Total)
+R7 <- read.csv("Region 7 - TN,NC,SC,MS,AL,GA,FL.csv")%>% select(-Total, -II)
+R8 <- read.csv("Region 8 - NJ,PA,DE,MD,VA,WV.csv")%>% select(-Total, -II)
+R9 <- read.csv("Region 9 - ME,NH,VT,MA,RI,CT,NY.csv")%>% select(-Total, -II)
+R10 <- read.csv("Region 10 - AZ,CA,HI,NV.csv")%>% select(-Total, -II)
+
+
+R1[is.na(R1)] <- 0
+R2[is.na(R2)] <- 0
+R3[is.na(R3)] <- 0
+R4[is.na(R4)] <- 0
+R5[is.na(R5)] <- 0
+R6[is.na(R6)] <- 0
+R7[is.na(R7)] <- 0
+R8[is.na(R8)] <- 0
+R9[is.na(R9)] <- 0
+R10[is.na(R10)] <- 0
+
+
+
+R1L <- R1 %>%  pivot_longer(c("AH":"WH"), names_to = "Breed", values_to = "Entries") 
+
+
+f <- ggplot(R1L, aes(y=Entries, x=Year, fill=Breed))+ 
+  theme_bw(28)+
+  geom_point(data=R1L, mapping=aes(x=Year, y=Entries), size=4, shape=21)+
+  geom_line(data=R1L, aes(x=Year, color=Breed))+
+  xlab("Years") + ylab("Number of Entries")+
+  ggtitle(expression(atop("Region 1 ASFA", atop(italic("Entries in AK, WA, OR, ID, MT"), ""))))+
+  theme(plot.title = element_text(size = 35, face="bold", hjust=0.5))+
+  theme(legend.title= element_text(size=28))+
+  theme(legend.text= element_text(size=20))
+f
+
+ggsave("ASFAEntries_R1.png",f, width=12, height=8)
+
+
+
+R2L <- R2 %>%  pivot_longer(c("AH":"WH"), names_to = "Breed", values_to = "Entries") 
+
+
+f <- ggplot(R2L, aes(y=Entries, x=Year, fill=Breed))+ 
+  theme_bw(28)+
+  geom_point(data=R2L, mapping=aes(x=Year, y=Entries), size=4, shape=21)+
+  geom_line(data=R2L, aes(x=Year, color=Breed))+
+  xlab("Years") + ylab("Number of Entries")+
+  ggtitle(expression(atop("Region 2 ASFA", atop(italic("Entries in CA, NV"), ""))))+
+  theme(plot.title = element_text(size = 35, face="bold", hjust=0.5))+
+  theme(legend.title= element_text(size=28))+
+  theme(legend.text= element_text(size=20))
+f
+
+ggsave("ASFAEntries_R2.png",f, width=12, height=8)
+
+
+
+
+
+
+R3L <- R3 %>%  pivot_longer(c("AH":"WH"), names_to = "Breed", values_to = "Entries") 
+
+
+f <- ggplot(R3L, aes(y=Entries, x=Year, fill=Breed))+ 
+  theme_bw(28)+
+  geom_point(data=R3L, mapping=aes(x=Year, y=Entries), size=4, shape=21)+
+  geom_line(data=R3L, aes(x=Year, color=Breed))+
+  xlab("Years") + ylab("Number of Entries")+
+  ggtitle(expression(atop("Region 3 ASFA", atop(italic("Entries in CO, WY, UT, NM"), ""))))+
+  theme(plot.title = element_text(size = 35, face="bold", hjust=0.5))+
+  theme(legend.title= element_text(size=28))+
+  theme(legend.text= element_text(size=20))
+f
+
+ggsave("ASFAEntries_R3.png",f, width=12, height=8)
+
+
+
+
+
+R4L <- R4 %>%  pivot_longer(c("AH":"WH"), names_to = "Breed", values_to = "Entries") 
+
+
+f <- ggplot(R4L, aes(y=Entries, x=Year, fill=Breed))+ 
+  theme_bw(28)+
+  geom_point(data=R4L, mapping=aes(x=Year, y=Entries), size=4, shape=21)+
+  geom_line(data=R4L, aes(x=Year, color=Breed))+
+  xlab("Years") + ylab("Number of Entries")+
+  ggtitle(expression(atop("Region 4 ASFA", atop(italic("Entries in TX, OK, AR, LA"), ""))))+
+  theme(plot.title = element_text(size = 35, face="bold", hjust=0.5))+
+  theme(legend.title= element_text(size=28))+
+  theme(legend.text= element_text(size=20))
+f
+
+ggsave("ASFAEntries_R4.png",f, width=12, height=8)
+
+
+
+
+
+R5L <- R5 %>%  pivot_longer(c("AH":"WH"), names_to = "Breed", values_to = "Entries") 
+
+
+f <- ggplot(R5L, aes(y=Entries, x=Year, fill=Breed))+ 
+  theme_bw(28)+
+  geom_point(data=R5L, mapping=aes(x=Year, y=Entries), size=4, shape=21)+
+  geom_line(data=R5L, aes(x=Year, color=Breed))+
+  xlab("Years") + ylab("Number of Entries")+
+  ggtitle(expression(atop("Region 5 ASFA", atop(italic("Entries in ND, SD, IA, NE, MN, KS, MO"), ""))))+
+  theme(plot.title = element_text(size = 35, face="bold", hjust=0.5))+
+  theme(legend.title= element_text(size=28))+
+  theme(legend.text= element_text(size=20))
+f
+
+ggsave("ASFAEntries_R5.png",f, width=12, height=8)
+
+
+
+
+
+R6L <- R6 %>%  pivot_longer(c("AH":"WH"), names_to = "Breed", values_to = "Entries") 
+
+
+f <- ggplot(R6L, aes(y=Entries, x=Year, fill=Breed))+ 
+  theme_bw(28)+
+  geom_point(data=R6L, mapping=aes(x=Year, y=Entries), size=4, shape=21)+
+  geom_line(data=R6L, aes(x=Year, color=Breed))+
+  xlab("Years") + ylab("Number of Entries")+
+  ggtitle(expression(atop("Region 6 ASFA", atop(italic("Entries in WI, IL, MI, IN, OH, KY"), ""))))+
+  theme(plot.title = element_text(size = 35, face="bold", hjust=0.5))+
+  theme(legend.title= element_text(size=28))+
+  theme(legend.text= element_text(size=20))
+f
+
+ggsave("ASFAEntries_R6.png",f, width=12, height=8)
+
+
+
+
+
+R7L <- R7 %>%  pivot_longer(c("AH":"WH"), names_to = "Breed", values_to = "Entries") 
+
+
+f <- ggplot(R7L, aes(y=Entries, x=Year, fill=Breed))+ 
+  theme_bw(28)+
+  geom_point(data=R7L, mapping=aes(x=Year, y=Entries), size=4, shape=21)+
+  geom_line(data=R7L, aes(x=Year, color=Breed))+
+  xlab("Years") + ylab("Number of Entries")+
+  ggtitle(expression(atop("Region 7 ASFA", atop(italic("Entries in TN, NC, SC, MS, AL, GA, FL"), ""))))+
+  theme(plot.title = element_text(size = 35, face="bold", hjust=0.5))+
+  theme(legend.title= element_text(size=28))+
+  theme(legend.text= element_text(size=20))
+f
+
+ggsave("ASFAEntries_R7.png",f, width=12, height=8)
+
+
+
+
+
+R8L <- R8 %>%  pivot_longer(c("AH":"WH"), names_to = "Breed", values_to = "Entries") 
+
+
+f <- ggplot(R8L, aes(y=Entries, x=Year, fill=Breed))+ 
+  theme_bw(28)+
+  geom_point(data=R8L, mapping=aes(x=Year, y=Entries), size=4, shape=21)+
+  geom_line(data=R8L, aes(x=Year, color=Breed))+
+  xlab("Years") + ylab("Number of Entries")+
+  ggtitle(expression(atop("Region 8 ASFA", atop(italic("Entries in NJ, PA, DE, MD, VA, WV"), ""))))+
+  theme(plot.title = element_text(size = 35, face="bold", hjust=0.5))+
+  theme(legend.title= element_text(size=28))+
+  theme(legend.text= element_text(size=20))
+f
+
+ggsave("ASFAEntries_R8.png",f, width=12, height=8)
+
+
+
+
+
+R9L <- R9 %>%  pivot_longer(c("AH":"WH"), names_to = "Breed", values_to = "Entries") 
+
+
+f <- ggplot(R9L, aes(y=Entries, x=Year, fill=Breed))+ 
+  theme_bw(28)+
+  geom_point(data=R9L, mapping=aes(x=Year, y=Entries), size=4, shape=21)+
+  geom_line(data=R9L, aes(x=Year, color=Breed))+
+  xlab("Years") + ylab("Number of Entries")+
+  ggtitle(expression(atop("Region 9 ASFA", atop(italic("Entries in ME, NJ, VT, MA, RI, CT, NY"), ""))))+
+  theme(plot.title = element_text(size = 35, face="bold", hjust=0.5))+
+  theme(legend.title= element_text(size=28))+
+  theme(legend.text= element_text(size=20))
+f
+
+ggsave("ASFAEntries_R9.png",f, width=12, height=8)
+
+
+
+
+
+
+R10L <- R10 %>%  pivot_longer(c("AH":"WH"), names_to = "Breed", values_to = "Entries") 
+
+
+f <- ggplot(R10L, aes(y=Entries, x=Year, fill=Breed))+ 
+  theme_bw(28)+
+  geom_point(data=R10L, mapping=aes(x=Year, y=Entries), size=4, shape=21)+
+  geom_line(data=R10L, aes(x=Year, color=Breed))+
+  xlab("Years") + ylab("Number of Entries")+
+  ggtitle(expression(atop("Region 10 ASFA", atop(italic("Entries in AZ, CA, HI, NV"), ""))))+
+  theme(plot.title = element_text(size = 35, face="bold", hjust=0.5))+
+  theme(legend.title= element_text(size=28))+
+  theme(legend.text= element_text(size=20))
+f
+
+ggsave("ASFAEntries_R10.png",f, width=12, height=8)
+
+
+
+
+```
+
+
